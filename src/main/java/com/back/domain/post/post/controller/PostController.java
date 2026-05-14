@@ -10,21 +10,32 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequiredArgsConstructor
 public class PostController {
-
     private final PostService postService;
-    @GetMapping("/posts/write")
-    @ResponseBody
-    public String showWrite() {
+
+    private String getWriteFormHtml() {
+        return getWriteFormHtml("");
+    }
+
+    private String getWriteFormHtml(String errorMessage) {
         return """
+                <div style="color: red;">%s</div>
+                
                 <form method="POST" action="doWrite">
-                  <input type="text" name="title" placeholder="제목" value="안녕">
+                  <input type="text" name="title" placeholder="제목" value="">
                   <br>
-                  <textarea name="content" placeholder="내용">반가워.</textarea>
+                  <textarea name="content" placeholder="내용"></textarea>
                   <br>
                   <input type="submit" value="작성">
                 </form>
-                """;
+                """.formatted(errorMessage);
     }
+
+    @GetMapping("/posts/write")
+    @ResponseBody
+    public String showWrite() {
+        return getWriteFormHtml();
+    }
+
     @PostMapping("/posts/doWrite")
     @ResponseBody
     @Transactional
@@ -32,8 +43,10 @@ public class PostController {
             @RequestParam(defaultValue = "") String title,
             @RequestParam(defaultValue = "") String content
     ) {
-        Post post = postService.write(title, content);
+        if (title.isBlank()) return getWriteFormHtml("제목을 입력해주세요.");
+        if (content.isBlank()) return getWriteFormHtml("내용을 입력해주세요.");
 
+        Post post = postService.write(title, content);
         return "%d번 글이 생성되었습니다.".formatted(post.getId());
     }
 }
