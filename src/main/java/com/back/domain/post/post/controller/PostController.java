@@ -10,22 +10,25 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.stream.Collectors;
+
 @Controller
 @RequiredArgsConstructor
-@Validated
 public class PostController {
     private final PostService postService;
 
     private String getWriteFormHtml() {
-        return getWriteFormHtml("", "", "", "");
+        return getWriteFormHtml("", "", "");
     }
 
-    private String getWriteFormHtml(String errorFieldName, String errorMessage, String title, String content) {
+    private String getWriteFormHtml( String errorMessage, String title, String content) {
         return """
-                <div style="color: red;">%s</div>
+                <ul style="color: red;">%s</ul>
                 
                 <form method="POST" action="doWrite">
                   <input type="text" name="title" placeholder="제목" value="%s" autofocus>
@@ -36,7 +39,11 @@ public class PostController {
                 </form>
                 
                 <script>
-                const errorFieldName = '%s';
+                const forms = document.querySelectorAll('form');
+                // 그 중에서 가장 마지막 폼 1개 찾기
+                const lastForm = forms[forms.length - 1];
+                
+                const errorFieldName = lastForm.previousElementSibling?.querySelector('li')?.dataset?.errorFieldName || '';
                 
                 if ( errorFieldName.length > 0 )
                 {
@@ -47,7 +54,7 @@ public class PostController {
                     lastForm[errorFieldName].focus();
                 }
                 </script>
-                """.formatted(errorMessage, title, content, errorFieldName);
+                """.formatted(errorMessage, title, content);
     }
 
     @GetMapping("/posts/write")
@@ -60,11 +67,11 @@ public class PostController {
     @AllArgsConstructor
     @Getter
     public static class WriteForm {
-        @NotBlank
-        @Size(min = 2, max = 20)
+        @NotBlank(message = "01-제목을 입력해주세요.")
+        @Size(min = 2, max = 20, message = "02-제목은 2자 이상, 20자 이하로 입력가능합니다.")
         private String title;
-        @NotBlank
-        @Size(min = 2, max = 100)
+        @NotBlank(message = "03-내용을 입력해주세요.")
+        @Size(min = 2, max = 100,message = "04-내용은 2자 이상 100자 이하 입력가능합니다.")
         private String content;
     }
 
@@ -73,8 +80,21 @@ public class PostController {
     @Transactional
     public String write(
             @Valid
-            WriteForm form
+            WriteForm form,
+            BindingResult bindingResult
     ) {
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult
+                    .getFieldErrors()
+                    .stream()
+                    .map(fieldError -> (fieldError.getField() + "-" + fieldError.getDefaultMessage())
+                    .split("-",3))
+                    .map(field -> "<!--%s--><li data-error-field-name=\"%s\">%s</li>".formatted(field[1], field[0], field[2]))
+                    .sorted()
+                    .collect(Collectors.joining("\n"));
+            return getWriteFormHtml( errorMessage, form.getTitle(), form.getContent());
+        }
         Post post = postService.write(form.getTitle(),form.getContent());
         return "%d번 글이 생성되었습니다.".formatted(post.getId());
     }
