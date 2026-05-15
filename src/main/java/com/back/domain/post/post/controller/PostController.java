@@ -12,8 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.stream.Collectors;
@@ -22,12 +20,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
-
-    @GetMapping("/posts/write")
-    public String write() {
-        return "post/post/write";
-    }
-
 
     @AllArgsConstructor
     @Getter
@@ -38,6 +30,12 @@ public class PostController {
         @NotBlank(message = "03-내용을 입력해주세요.")
         @Size(min = 2, max = 100,message = "04-내용은 2자 이상 100자 이하 입력가능합니다.")
         private String content;
+    }
+
+
+    @GetMapping("/posts/write")
+    public String write(WriteForm form) {
+        return "post/post/write";
     }
 
     @PostMapping("/posts/doWrite")
@@ -58,6 +56,8 @@ public class PostController {
                     .map(field -> "<!--%s--><li data-error-field-name=\"%s\">%s</li>".formatted(field[1], field[0], field[2]))
                     .sorted()
                     .collect(Collectors.joining("\n"));
+
+            model.addAttribute("errorMessage", errorMessage);
             return "post/post/write";
         }
         Post post = postService.write(form.getTitle(),form.getContent());
