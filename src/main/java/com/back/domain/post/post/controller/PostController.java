@@ -2,8 +2,11 @@ package com.back.domain.post.post.controller;
 
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,20 +56,26 @@ public class PostController {
         return getWriteFormHtml();
     }
 
+
+    @AllArgsConstructor
+    @Getter
+    public static class WriteForm {
+        @NotBlank
+        @Size(min = 2, max = 20)
+        private String title;
+        @NotBlank
+        @Size(min = 2, max = 100)
+        private String content;
+    }
+
     @PostMapping("/posts/doWrite")
     @ResponseBody
     @Transactional
     public String write(
-            @NotBlank
-            @Size(min = 2, max = 20)
-            @RequestParam(defaultValue = "")
-            String title,
-            @NotBlank
-            @Size(min = 2, max = 100)
-            @RequestParam(defaultValue = "")
-            String content
+            @Valid
+            WriteForm form
     ) {
-        Post post = postService.write(title, content);
+        Post post = postService.write(form.getTitle(),form.getContent());
         return "%d번 글이 생성되었습니다.".formatted(post.getId());
     }
 }
