@@ -21,32 +21,34 @@ import java.util.stream.Collectors;
 public class PostController {
     private final PostService postService;
 
+    @ModelAttribute("siteName")
+    public String siteName() {
+        return "커뮤니티 사이트 A";
+    }
+
     @AllArgsConstructor
     @Getter
     public static class WriteForm {
-        @NotBlank(message = "01-제목을 입력해주세요.")
-        @Size(min = 2, max = 20, message = "02-제목은 2자 이상, 20자 이하로 입력가능합니다.")
+        @NotBlank(message = "1-제목을 입력해주세요.")
+        @Size(min = 2, max = 20, message = "2-제목은 2자 이상, 20자 이하로 입력가능합니다.")
         private String title;
-        @NotBlank(message = "03-내용을 입력해주세요.")
-        @Size(min = 2, max = 100,message = "04-내용은 2자 이상 100자 이하 입력가능합니다.")
+        @NotBlank(message = "3-내용을 입력해주세요.")
+        @Size(min = 2, max = 20, message = "4-내용은 2자 이상, 20자 이하로 입력가능합니다.")
         private String content;
     }
 
-
     @GetMapping("/posts/write")
-    public String write(WriteForm form) {
+    public String showWrite(@ModelAttribute("form") WriteForm form) {
         return "post/post/write";
     }
 
     @PostMapping("/posts/doWrite")
     @Transactional
-    public String doWrite(
-            @Valid
-            WriteForm form,
+    public String write(
+            @ModelAttribute("form") @Valid WriteForm form,
             BindingResult bindingResult,
             Model model
     ) {
-
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult
                     .getFieldErrors()
