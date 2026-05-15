@@ -41,18 +41,19 @@ public class PostController {
         return "post/post/write";
     }
 
-    @PostMapping("/posts/doWrite")
+    @PostMapping("/posts/write")
     @Transactional
     public String write(
             @ModelAttribute("form") @Valid WriteForm form,
-            BindingResult bindingResult,
-            Model model
+            BindingResult bindingResult
+
     ) {
-        if (bindingResult.hasErrors()) {
-            return "post/post/write";
-        }
-        Post post = postService.write(form.getTitle(),form.getContent());
-        model.addAttribute("post", post);
-        return "post/post/writeDone";
+        if (bindingResult.hasErrors()) return "post/post/write";
+
+        postService.write(form.getTitle(), form.getContent());
+
+        return "redirect:/posts/write";
+
+
     }
 }
