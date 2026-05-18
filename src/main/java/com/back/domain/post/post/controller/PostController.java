@@ -50,10 +50,22 @@ public class PostController {
     ) {
         if (bindingResult.hasErrors()) return "post/post/write";
 
-        postService.write(form.getTitle(), form.getContent());
+        Post post = postService.write(form.getTitle(), form.getContent());
 
-        return "redirect:/posts/write";
+        return "redirect:/posts/" + post.getId();
+    }
 
 
+    @GetMapping("/posts/{id}")
+    @Transactional(readOnly = true)
+    public String showDetail(
+            @PathVariable int id,
+            Model model
+    ) {
+        Post post = postService.findById(id).get();
+
+        model.addAttribute("post", post);
+
+        return "post/post/detail";
     }
 }
