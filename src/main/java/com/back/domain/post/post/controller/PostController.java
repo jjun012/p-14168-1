@@ -14,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @Controller
 @RequiredArgsConstructor
@@ -67,5 +69,17 @@ public class PostController {
         model.addAttribute("post", post);
 
         return "post/post/detail";
+    }
+
+    @GetMapping("/posts")
+    @Transactional(readOnly = true)
+    @ResponseBody
+    public List<Post> showList() {
+        return postService.findAll();
+    }
+
+    @GetMapping("/posts/")
+    public String redirectToList() {
+        return "redirect:/posts";
     }
 }
